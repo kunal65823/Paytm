@@ -3,9 +3,10 @@ const router = express.Router();
 const User = require('../models/Users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/authMiddleware');
 require('dotenv').config();
 
-router.post("/Signup", async (req,res)=>{
+router.post("/Signup",authMiddleware, async (req,res)=>{
     try {
         const { firstName, lastName, email, password } = req.body;
 
@@ -18,6 +19,7 @@ router.post("/Signup", async (req,res)=>{
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        
 
         const newUser = new User.create({
             firstName,
@@ -25,6 +27,12 @@ router.post("/Signup", async (req,res)=>{
             email,
             password: hashedPassword
         });
+        const userid = newUser._id;
+
+        await Account.create({
+            userId: userid,
+            balancePaise: 1 + Math.floor(Math.random() * 100000) 
+        }); 
 
         res.status(201).json({
             message: "User created successfully",
