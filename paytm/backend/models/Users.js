@@ -24,6 +24,20 @@ const userSchemas = new mongoose.Schema({
     }
 );
 
+const accountSchemas = new mongoose.Schema({
+    userId:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'User',
+        required:true
+    },
+    balance:{
+        type:Number,
+        default:0
+    }
+})
+
+const Account = mongoose.model('Account',accountSchemas);
+
 const User = mongoose.model(
     'User',userSchemas
 )
