@@ -1,6 +1,7 @@
 const {JWT_SECRET} = requires('dotenv').config();   
 const jwt = require('jsonwebtoken');
 
+
 const authMiddlelware = (req,res,next) => {
     const authheader = req.header.authrization;
     
@@ -24,4 +25,4 @@ const authMiddlelware = (req,res,next) => {
 
 };
 
-module.export = authMiddlelware;
+module.exports = authMiddlelware;

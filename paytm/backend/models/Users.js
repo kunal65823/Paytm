@@ -24,17 +24,46 @@ const userSchemas = new mongoose.Schema({
     }
 );
 
-const accountSchemas = new mongoose.Schema({
-    userId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'User',
-        required:true
+
+
+const accountSchema = new mongoose.Schema(
+    {
+        ownerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true
+        },
+
+        accountHolder: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
+        // Store money in paise, not decimal rupees
+        balancePaise: {
+            type: Number,
+            required: true,
+            min: 0,
+            validate: {
+                validator: Number.isSafeInteger,
+                message: "Balance must be a safe integer"
+            }
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
+        }
     },
-    balance:{
-        type:Number,
-        default:0
+    {
+        timestamps: true
     }
-})
+);
+
+module.exports = mongoose.model("Account", accountSchema);
+
 
 const Account = mongoose.model('Account',accountSchemas);
 
