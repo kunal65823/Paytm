@@ -1,28 +1,25 @@
-const {JWT_SECRET} = requires('dotenv').config();   
+require("dotenv").config();
 const jwt = require('jsonwebtoken');
 
+const authMiddleware = (req, res, next) => {
+    const authorization = req.get("Authorization");
 
-const authMiddlelware = (req,res,next) => {
-    const authheader = req.header.authrization;
-    
-    if(!authheader || !authheader.startsWith('Bearer')){
+    if (!authorization || !authorization.startsWith("Bearer ")) {
         return res.status(401).json({
             message: "Authorization header missing or invalid"
         });
     }
-    const token = authheader.split(' ')[1];
 
-    try{
-        const decode = jwt.verify(token,JWT_SECRET);
-        req.user = decode;
+    try {
+        const token = authorization.slice(7);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = decoded.userId;
         next();
-    }catch(err){
-        console.error(err);
-        res.status(401).json({
-            message: "Invalid token"
+    } catch (error) {
+        return res.status(401).json({
+            message: "Invalid or expired token"
         });
     }
-
 };
 
-module.exports = authMiddlelware;
+module.exports = authMiddleware;

@@ -3,8 +3,8 @@ const bcrypt = require("bcryptjs");
 
 const userRouter = express.Router();
 
-const User = require("../../models/User");
-const authMiddleware = require("../middleware/authMiddleware");
+const User = require("../models/Users");
+const authMiddleware = require("../middlewares/authmiddlewares");
 
 // ==================================
 // 1. UPDATE USER INFORMATION
@@ -66,34 +66,21 @@ userRouter.put("/", authMiddleware, async (req, res) => {
 
 userRouter.get("/bulk", authMiddleware, async (req, res) => {
     try {
-        const filter = (req.query.filter || "").trim();
-
-        if (!filter) {
-            return res.status(400).json({
-                message: "Please provide a search filter"
-            });
-        }
-
-        const users = await User.find({
+        const filter = typeof req.query.filter === "string" ? req.query.filter.trim() : "";
+        const escapedFilter = filter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const criteria = filter ? {
             $or: [
-                {
-                    firstName: {
-                        $regex: filter,
-                        $options: "i"
-                    }
-                },
-                {
-                    lastName: {
-                        $regex: filter,
-                        $options: "i"
-                    }
-                }
+                { firstName: { $regex: escapedFilter, $options: "i" } },
+                { lastName: { $regex: escapedFilter, $options: "i" } },
+                { email: { $regex: escapedFilter, $options: "i" } }
             ]
-        })
+        } : {};
+
+        const users = await User.find({ ...criteria, _id: { $ne: req.userId } })
         .select("firstName lastName")
         .limit(20);
 
-        res.status(200).json({
+        return res.status(200).json({
             users: users.map(user => ({
                 firstName: user.firstName,
                 lastName: user.lastName,
@@ -104,7 +91,7 @@ userRouter.get("/bulk", authMiddleware, async (req, res) => {
     } catch (error) {
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Internal server error"
         });
     }

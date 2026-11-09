@@ -1,69 +1,38 @@
 
 const mongoose = require("mongoose");
-const Account = require("../../models/Account");
+const Account = require("../models/Account");
 
 const transferFunds = async (req, res) => {
-    const { toAccountId, amountPaise } = req.body;
+    const { toUserId, amountPaise } = req.body || {};
 
-    // 1. Validate authenticated user
     if (!req.userId || !mongoose.isValidObjectId(req.userId)) {
-        return res.status(401).json({
-            message: "Authentication required"
-        });
+        return res.status(401).json({ message: "Authentication required" });
     }
 
-    // 2. Validate receiver ID
-    if (!mongoose.isValidObjectId(toAccountId)) {
-        return res.status(400).json({
-            message: "Invalid receiver account ID"
-        });
+    if (!mongoose.isValidObjectId(toUserId)) {
+        return res.status(400).json({ message: "Invalid recipient" });
     }
 
-    // 3. Validate amount
-    if (
-        !Number.isSafeInteger(amountPaise) ||
-        amountPaise <= 0
-    ) {
-        return res.status(400).json({
-            message: "Amount must be a positive integer in paise"
-        });
+    if (!Number.isSafeInteger(amountPaise) || amountPaise <= 0) {
+        return res.status(400).json({ message: "Amount must be a positive integer in paise" });
     }
 
-    const fromAccountId = req.body.fromAccountId;
-
-    if (!mongoose.isValidObjectId(fromAccountId)) {
-        return res.status(400).json({
-            message: "Invalid sender account ID"
-        });
+    if (req.userId.toString() === toUserId.toString()) {
+        return res.status(400).json({ message: "Cannot transfer to yourself" });
     }
 
-    // 4. Prevent same-account transfers
-    if (
-        fromAccountId.toString() === toAccountId.toString()
-    ) {
-        return res.status(400).json({
-            message: "Cannot transfer to the same account"
-        });
-    }
-
-    const session = await mongoose.startSession();
+    let session;
 
     try {
+        session = await mongoose.startSession();
         await session.withTransaction(
             async () => {
 
-                // 5. Deduct money only from the
-                // authenticated user's own account.
-                // Also check available balance atomically.
-
                 const sender = await Account.findOneAndUpdate(
                     {
-                        _id: fromAccountId,
                         ownerId: req.userId,
                         isActive: true,
-                        balancePaise: {
-                            $gte: amountPaise
-                        }
+                        balancePaise: { $gte: amountPaise }
                     },
                     {
                         $inc: {
@@ -83,13 +52,8 @@ const transferFunds = async (req, res) => {
                     );
                 }
 
-                // 6. Credit the receiver account.
-
                 const receiver = await Account.findOneAndUpdate(
-                    {
-                        _id: toAccountId,
-                        isActive: true
-                    },
+                    { ownerId: toUserId, isActive: true },
                     {
                         $inc: {
                             balancePaise: amountPaise
@@ -113,10 +77,7 @@ const transferFunds = async (req, res) => {
             }
         );
 
-        return res.status(200).json({
-            success: true,
-            message: "Money transferred successfully"
-        });
+        return res.status(200).json({ success: true, message: "Money transferred successfully" });
 
     } catch (error) {
         console.error("Transfer failed:", error.message);
@@ -136,12 +97,10 @@ const transferFunds = async (req, res) => {
             });
         }
 
-        return res.status(500).json({
-            message: "Transfer failed. No transfer was committed."
-        });
+        return res.status(500).json({ message: "Transfer failed. No transfer was committed." });
 
     } finally {
-        await session.endSession();
+        if (session) await session.endSession();
     }
 };
 

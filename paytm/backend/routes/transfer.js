@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
-const transferFunds = require("../controllers/transferController");
+const authMiddleware = require("../middlewares/authmiddlewares");
+const transferFunds = require("../controllers/account");
 
 
 router.post("/transfer", authMiddleware, transferFunds);

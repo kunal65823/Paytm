@@ -1,11 +1,10 @@
-import {Link} from "reat-routs-dom"
+import { Link } from "react-router-dom";
 
-export funtion BottomWarning({label,buttonText, to}){
-    return <div>
-      <div className ="py-2 text-sm flex justify-center">
-        {label}
-     </div>
-     <Link className ="pointer underline pl-1 cursur-pointer" to ={to} >{buttonText</Link>
-    
+export function BottomWarning({ label, buttonText, to }) {
+  return (
+    <div className="flex justify-center gap-1 py-3 text-sm text-slate-600">
+      <span>{label}</span>
+      <Link className="font-semibold text-emerald-800 underline" to={to}>{buttonText}</Link>
     </div>
+  );
 }
