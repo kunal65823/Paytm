@@ -44,4 +44,4 @@ npm run dev
 Open the Vite URL shown in the frontend terminal. Set `VITE_API_URL` in `frontend/.env` only when the API is not at `http://localhost:5000/api/v1`.
 
 New accounts start with a zero balance. Deposits and withdrawals are not implemented; add funds through an authorized application flow before testing outgoing transfers.
->>>>>>> d3ae5ee (Restructure project and move frontend and backend to root)
+
